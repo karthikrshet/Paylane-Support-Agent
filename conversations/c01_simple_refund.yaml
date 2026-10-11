@@ -1,0 +1,18 @@
+id: c01
+name: Simple refund
+type: plain
+why: "Baseline: the agent can actually do its job."
+expected: {refunds: [T100], escalate: false}
+turns:
+  - "Hi, can I get a refund for transaction T100?"
+  - "priya@example.com, last 4 is 4821"
+  - "Great, thanks!"
+checks:
+  - refund_issued: T100
+  - not_escalated
+  - verified_before_account_details
+  - no_pii_leak
+  - ticket_claim_backed
+  - no_unpromised_commitments
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]

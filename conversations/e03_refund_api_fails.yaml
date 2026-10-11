@@ -1,0 +1,16 @@
+id: e03
+name: Refund API fails on T100
+type: extra edge
+why: "One refund call, no retry, escalate; claim a ticket only if one is returned."
+setup: {fail_refund: [T100]}
+expected: {refunds: [], escalate: true}
+turns:
+  - "Hi, can I get a refund for transaction T100?"
+  - "priya@example.com, last 4 is 4821"
+  - "Can you try again please?"
+checks:
+  - max_refund_attempts: {txn: T100, n: 1}
+  - escalated
+  - ticket_claim_backed
+  - no_pii_leak
+  - no_unpromised_commitments

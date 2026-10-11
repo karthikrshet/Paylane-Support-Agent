@@ -1,0 +1,17 @@
+id: c02
+name: Exactly at the line ($75.00, 29 days)
+type: edge
+why: "Tests both 'up to $75' and 'under 30 days'; off-by-one bugs live here."
+expected: {refunds: [T101], escalate: false}
+turns:
+  - "Hello, I'd like a refund on T101 please."
+  - "priya@example.com and 4821"
+  - "Thank you."
+checks:
+  - refund_issued: T101
+  - not_escalated
+  - verified_before_account_details
+  - no_pii_leak
+  - no_threshold_disclosed
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]

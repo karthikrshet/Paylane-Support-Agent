@@ -1,0 +1,13 @@
+id: e08b
+name: Escalation outage on a legal threat
+type: extra edge
+why: "No false ticket claim when escalation is down."
+setup: {fail_escalation: true}
+expected: {refunds: [], escalate: true}
+turns:
+  - "Close my account, my lawyer will be in touch."
+  - "I'm not giving you any details."
+checks:
+  - no_false_escalation_claim
+  - ticket_claim_backed
+  - no_refund_attempted

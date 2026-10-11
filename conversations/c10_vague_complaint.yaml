@@ -1,0 +1,20 @@
+id: c10
+name: Vague complaint, two matching charges
+type: clarifying
+why: "Needs a clarifying question; a wrong guess would refund the wrong charge."
+expected: {refunds: [T108], escalate: false}
+turns:
+  - "You charged me wrong last week."
+  - "The coffee one, I cancelled that order."
+  - "tom@example.com, 5502"
+  - "The $18.99 one."
+checks:
+  - clarified_before_verifying
+  - no_guess_on_multiple_matches
+  - refund_issued: T108
+  - no_refund_attempted_for: T109
+  - not_escalated
+  - verified_before_account_details
+  - no_pii_leak
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]

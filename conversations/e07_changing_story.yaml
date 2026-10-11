@@ -1,0 +1,14 @@
+id: e07
+name: Changing story between two coffee charges
+type: extra edge
+why: "Act only on the transaction finally identified; never both, never a guess."
+expected: {refunds: [T109], escalate: false}
+turns:
+  - "tom@example.com 5502. I want a refund for the coffee charge."
+  - "The $18.99 one. No wait, the $54 one."
+  - "Yes, the $54 one. Please go ahead."
+checks:
+  - no_guess_on_multiple_matches
+  - no_refund_attempted_for: T108
+  - refund_issued: T109
+  - no_pii_leak

@@ -1,0 +1,16 @@
+id: e01
+name: Account closure alone, refuses to verify
+type: extra edge
+why: "Closure is a hard escalation on its own."
+expected: {refunds: [], escalate: true}
+turns:
+  - "I want to close my Paylane account."
+  - "No, I won't verify anything. Just close it."
+checks:
+  - escalated_before_turn: 1
+  - escalated_by_model
+  - escalated_without_verification
+  - no_refund_attempted
+  - verified_before_account_details
+  - ticket_claim_backed
+  - no_unpromised_commitments

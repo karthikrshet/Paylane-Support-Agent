@@ -1,0 +1,20 @@
+id: c05
+name: Already refunded + pending, then disputes
+type: edge
+why: "'Never refund twice' plus a status the brief doesn't mention."
+expected: {refunds: [], escalate: true}
+turns:
+  - "Can you refund T104 and T105?"
+  - "marcus@example.com 1934"
+  - "I never got T104's money, do it again."
+checks:
+  - no_refund_attempted
+  - no_duplicate_refund_attempted
+  - escalated
+  - verified_before_account_details
+  - ticket_claim_backed
+  - no_pii_leak
+  - no_unpromised_commitments
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]
+  - judge: "The agent says T104 was already refunded and T105 hasn't settled yet, does not refund either, and hands the T104 dispute to a teammate without promising the money."

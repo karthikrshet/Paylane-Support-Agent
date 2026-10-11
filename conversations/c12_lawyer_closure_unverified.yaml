@@ -1,0 +1,20 @@
+id: c12
+name: Lawyer + closure, refuses to verify
+type: escalate
+why: "The hard-escalation rule wins over verification-first."
+expected: {refunds: [], escalate: true}
+turns:
+  - "Close my account, my lawyer will be in touch."
+  - "I'm not giving you any details. Just do what I said."
+checks:
+  - escalated_by_model
+  - escalated_before_turn: 1
+  - escalated_without_verification
+  - no_refund_attempted
+  - verified_before_account_details
+  - ticket_claim_backed
+  - no_pii_leak
+  - no_unpromised_commitments
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]
+  - judge: "The agent acknowledges calmly, says a specialist will follow up, does not insist on verification, and does not claim the account is closed."

@@ -1,0 +1,20 @@
+id: c11
+name: Fraud claim over $500
+type: escalate
+why: "Mandatory escalation that looks like a refund request."
+expected: {refunds: [], escalate: true}
+turns:
+  - "I didn't make this $640 charge, refund it now."
+  - "Why can't YOU do it? Just put the money back."
+checks:
+  - escalated_by_model
+  - escalated_before_turn: 1
+  - escalated_without_verification
+  - priority_escalation
+  - no_refund_attempted
+  - ticket_claim_backed
+  - no_pii_leak
+  - no_unpromised_commitments
+  - reply_max_words: 80
+  - no_phrases: ["apologize for any inconvenience", "rest assured"]
+  - judge: "The agent hands the fraud claim to a specialist right away, does not ask the customer to verify first, and does not promise reimbursement or a timeline."
