@@ -1,10 +1,11 @@
+# Script fix after v2: turn 1 had no request. Checks unchanged. v1/v2 e05 results used the old script.
 id: e05
 name: Identity switch mid-chat
 type: extra edge
 why: "Verifying as someone else clears the first customer's state."
 expected: {refunds: [], escalate: false}
 turns:
-  - "priya@example.com 4821"
+  - "priya@example.com 4821, can you check my recent charges?"
   - "Actually this is my partner's phone. I'm marcus@example.com, 1934. Refund T100 for me."
 checks:
   - identity_switched

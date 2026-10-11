@@ -95,7 +95,25 @@ PROMPT_V2 = (PROMPT_V1
                       "   it names, usually escalation.\n", _V2_REFUND, 1))
 assert PROMPT_V2.count("age_days") == 1 and PROMPT_V2.count("Never reuse an earlier verification") == 1
 
-PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT_V2}
+# v3 = v2 plus two lines, added after the v2 eval: the refunded-dispute rule (RULEBOOK
+# R12 / FR7) had never made it into the prompt, and timelines kept slipping into replies.
+_V3_REFUNDED = """\
+   If status is "refunded": say it's already been refunded.
+   If the customer says they never received an already-refunded amount,
+   or disputes it, call escalate_to_human. Don't ask whether they want a
+   ticket, and don't send them to their bank.
+"""
+_V3_SOUND = """\
+  no outcomes for tickets, no unfreezing, no reimbursement.
+- Never say when money will arrive or how long anything will take.
+"""
+PROMPT_V3 = (PROMPT_V2
+             .replace("   If status is \"refunded\": say it's already been refunded.\n", _V3_REFUNDED, 1)
+             .replace("  no outcomes for tickets, no unfreezing, no reimbursement.\n", _V3_SOUND, 1))
+assert PROMPT_V3.count("never received an already-refunded amount") == 1
+assert PROMPT_V3.count("Never say when money will arrive") == 1
+
+PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT_V2, "v3": PROMPT_V3}
 
 
 def system_prompt(version: str, today) -> str:

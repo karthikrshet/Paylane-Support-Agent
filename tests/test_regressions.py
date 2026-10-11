@@ -123,3 +123,26 @@ def test_prompt_v1_frozen_and_v2_registered():
     # every v1 line survives in v2, in order
     v2_lines = iter(PROMPT_V2.splitlines())
     assert all(line in v2_lines for line in PROMPT_V1.splitlines())
+
+
+def test_prompt_v1_v2_frozen_and_v3_adds_exactly_two_rules():
+    import subprocess
+    from agent.prompt import PROMPT_V1, PROMPT_V2, PROMPT_V3, PROMPTS
+    committed = subprocess.run(["git", "show", "64d95e4:agent/prompt.py"], capture_output=True,
+                               text=True, encoding="utf-8").stdout
+    if committed:   # running inside the git checkout
+        ns = {}
+        exec(committed, ns)
+        assert ns["PROMPT_V1"] == PROMPT_V1 and ns["PROMPT_V2"] == PROMPT_V2
+    assert PROMPTS["v3"] is PROMPT_V3
+    added = [line for line in PROMPT_V3.splitlines() if line not in PROMPT_V2.splitlines()]
+    assert added == [
+        "- Never say when money will arrive or how long anything will take.",
+        "   If the customer says they never received an already-refunded amount,",
+        "   or disputes it, call escalate_to_human. Don't ask whether they want a",
+        "   ticket, and don't send them to their bank.",
+    ]
+    v3_lines = iter(PROMPT_V3.splitlines())
+    assert all(line in v3_lines for line in PROMPT_V2.splitlines())   # nothing removed or reordered
+    i = PROMPT_V3.index('If status is "refunded"')
+    assert PROMPT_V3.index("never received an already-refunded amount") > i   # placed right after it
