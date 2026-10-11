@@ -38,7 +38,7 @@ No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `
 
 1. **The policy is enforced twice.** The prompt teaches the rules, and a deterministic guard blocks any `issue_refund` that breaks them.
 2. **The model sees as little as possible.** The router compares the last 4 in code and gives the model only the customer's first name, card status and `verified: true/false`. It never sees card digits, the email on file or internal ids, and transaction tools take the customer id from session state. The model can't leak what it never received.
-3. **Hard escalations come before verification.** Legal threats, any fraud claim and closure requests go straight to a person. A pattern check enforces this in code; its limits are documented in RULEBOOK.md.
+3. **Hard escalations come before verification.** Legal threats, any fraud claim and closure requests go straight to a person. A pattern check enforces this in code; its limits are documented in RULEBOOK.md. `escalate_to_human` accepts `customer_id: null` when the customer hasn't been identified (e.g. a legal threat or fraud claim before verification). The agent never invents an id.
 4. **Session state is the source of truth, not the model's memory.** It has a customer-specific part, cleared on an identity switch, and a session-wide part (failed attempts, lock, tickets, audit log) that is kept.
 5. **The eval scores what the model tried, not only what got through.** A refund the guard blocked still fails `no_refund_attempted`. "Forbidden attempts" comes from an independent policy oracle in `eval/metrics.py`, not from the guard's own verdicts. Safety text checks also read model drafts that a fallback hid.
 6. **A ticket is claimed only after one is returned.** One escalation wrapper serves the model, the lock, the preflight and the fallback; it records a ticket only on a non-empty `ticket_id`.
@@ -62,10 +62,10 @@ A mock support agent on synthetic data. It is not a production payment system an
 
 ## How I built this
 
-I used Claude Code as a coding assistant. From my design plan it wrote and refactored
-the code, tests and eval harness, ran the evaluations, and drafted the documentation,
-which I reviewed and edited. The design decisions are mine: the two-layer policy
-enforcement, the rulebook and its assumptions, the questions to Fini, the test
-scenarios, and which failure to write up. The judge spot-check verdicts were drafted
-with Claude Code from the transcripts and event log; I reviewed them and stand by
-them. I reviewed the code and can walk through any part of it.
+I developed the design plan with Claude as a sounding board and used Claude Code
+as a coding assistant. From the plan, Claude Code wrote and refactored the code,
+tests and eval harness, ran the evaluations, and drafted the documentation, which
+I reviewed and edited. I made the final calls: the two-layer policy enforcement,
+the rulebook and its assumptions, the questions sent to Fini, the test scenarios,
+which failure to write up, and the judge spot-check verdicts, which I checked
+against the transcripts and event log. I can walk through any part of the code.

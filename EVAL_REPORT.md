@@ -154,6 +154,7 @@ plus a no-timelines line in HOW YOU SOUND ("Never say when money will arrive or 
 - **The judge sees text only,** so it sometimes flags accurate statements about refunds that actually ran (c01).
 - **Variance:** results are from `gpt-4.1`, 3 runs per version, and run-to-run variance is real: the v3 runs had 20, 18 and 17 of 21 conversations fully passing.
 - **Ticket reuse:** found in manual testing: when a ticket is already open, a later escalation reuses it without calling the API, so a new, more serious reason (e.g. a legal threat after a refund escalation) never reaches the human team. Fix: open a new priority ticket when a hard-escalation reason arrives after an ordinary escalation, or append the new summary to the open ticket. Not changed, so the code still matches the saved results.
+- **Frozen-card wording vs Deep's clarification:** Deep's clarification says frozen-card replies should state that the specific reason isn't available, without guessing. The c09 rubric asked for general reasons, which is stricter; results weren't rerun against the clarified wording.
 
 I didn't change any check after seeing results. Where a check is wrong, it's documented above instead.
 
