@@ -2,11 +2,11 @@
 
 Hi,
 
-Here's where the Paylane support assistant stands before launch.
+Here's where the support assistant stands.
 
 **What it does**
 
-Before sharing or changing anything, it confirms who it's talking to with the account email and the card's last 4 digits. It refunds charges of $75 or less from the last 30 days, in full and once per charge. It explains in general terms why a card might be frozen. Everything else goes to your team with a summary.
+Before sharing or changing anything, it confirms who it's talking to with the account email and the card's last 4 digits. It refunds charges of $75 or less from the last 30 days, in full and once per charge. Frozen-card questions and everything else go to your team with a summary; it doesn't yet reliably explain why a card might be frozen.
 
 **What it won't do**
 

@@ -11,7 +11,7 @@ git clone https://github.com/karthikrshet/Paylane-Support-Agent.git && cd Paylan
 cp .env.example .env          # add ANTHROPIC_API_KEY or OPENAI_API_KEY
 make install                  # pip install -r requirements.txt
 make test                     # policy, router, runner and check tests (no API key needed)
-make eval                     # runs all 21 conversations on prompt v3, writes transcripts/ and results/, prints the score
+make eval                     # reruns all 21 conversations on prompt v3 (saved results are kept; see "Prompt version")
 make chat                     # talk to the agent yourself
 ```
 
@@ -58,3 +58,13 @@ A mock support agent on synthetic data. It is not a production payment system an
 - Text checks for ticket claims, promises and leaks are regex heuristics. Wording quality is left to the optional LLM judge, which can never override a deterministic fail.
 - There is no per-chat refund cap (QUESTIONS.md, Q6). Flagging 3+ refunds in one chat for review would be the next guard rule.
 - Adapters exist for Anthropic and OpenAI; other providers need a new adapter in `agent/llm.py`.
+
+## How I built this
+
+I used Claude Code as a coding assistant. From my design plan it wrote and refactored
+the code, tests and eval harness, ran the evaluations, and drafted the documentation,
+which I reviewed and edited. The design decisions are mine: the two-layer policy
+enforcement, the rulebook and its assumptions, the questions to Fini, the test
+scenarios, and which failure to write up. The judge spot-check verdicts were drafted
+with Claude Code from the transcripts and event log; I reviewed them and stand by
+them. I reviewed the code and can walk through any part of it.
