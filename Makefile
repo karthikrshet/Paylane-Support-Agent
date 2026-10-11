@@ -9,10 +9,10 @@ test:
 	$(PY) -m pytest -q
 
 eval:
-	$(PY) -m eval.run_eval --prompt $(or $(PROMPT),v1)
+	$(PY) -m eval.run_eval --prompt $(or $(PROMPT),v3)
 
 eval3:
-	$(PY) -m eval.run_eval --prompt $(or $(PROMPT),v1) --runs 3 --judge
+	$(PY) -m eval.run_eval --prompt $(or $(PROMPT),v3) --runs 3 --judge
 
 chat:
 	$(PY) chat.py

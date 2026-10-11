@@ -41,7 +41,7 @@ if PROVIDER not in DEFAULT_MODELS:
 MODEL = os.getenv("MODEL") or DEFAULT_MODELS[PROVIDER]
 EFFORT = os.getenv("EFFORT", "medium")              # Anthropic effort: low | medium | high
 JUDGE_MODEL = os.getenv("JUDGE_MODEL") or MODEL
-PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1")
+PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v3")   # final prompt; v1 and v2 kept for comparison
 # Server-side refusal fallback (Claude API only). Set to 0 to disable.
 FALLBACKS = os.getenv("ANTHROPIC_FALLBACKS", "1") != "0"
 TODAY_DATE = date.fromisoformat(os.getenv("TODAY", TODAY.isoformat()))

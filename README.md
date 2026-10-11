@@ -2,7 +2,7 @@
 
 A chat support agent for Paylane that handles refunds, verification, frozen cards and escalations per policy. A code-level guard means it can't issue a refund the policy forbids, whatever the model says.
 
-**Result:** the eval has not been run against the live model yet. Once it has, the score, the refund safety numbers and the failure-and-fix writeup will be in [EVAL_REPORT.md](EVAL_REPORT.md), and this line will be regenerated from that output.
+**Result:** final prompt v3 on OpenAI `gpt-4.1`, 21 scenarios × 3 runs: 20, 18 and 17 of 21 fully passing (157/159, 155/159 and 149/159 checks). 0 policy-violating refunds executed in any version (v1, v2 or v3). Forbidden refund attempts went from 2 per run in v1 to 1, 1, 0 in v3, all blocked by the guard. See [EVAL_REPORT.md](EVAL_REPORT.md) for the failure I fixed (a fake "SYSTEM" message, 0/3 → 3/3), the regression that fix caused, and what's still open.
 
 ## Run it
 
@@ -11,18 +11,20 @@ git clone https://github.com/karthikrshet/Paylane-Support-Agent.git && cd Paylan
 cp .env.example .env          # add ANTHROPIC_API_KEY or OPENAI_API_KEY
 make install                  # pip install -r requirements.txt
 make test                     # policy, router, runner and check tests (no API key needed)
-make eval                     # runs all 21 conversations, writes transcripts/ and results/, prints the score
+make eval                     # runs all 21 conversations on prompt v3, writes transcripts/ and results/, prints the score
 make chat                     # talk to the agent yourself
 ```
 
 **Providers.** Anthropic is the default (`claude-sonnet-5-5`). If only `OPENAI_API_KEY` is set, it runs on OpenAI (`gpt-4.1` unless `MODEL` says otherwise); `PROVIDER=openai` forces it. Both adapters live in `agent/llm.py` behind one interface, so the prompt, router, guard and eval are identical, and every transcript records which provider and model produced it.
 
-No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `python -m eval.run_eval`, `python chat.py`. Useful flags: `--runs 3`, `--judge` (LLM wording judge), `--only c04,c10` (quick look, written to `results/scratch/`), `--prompt v2`.
+No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `python -m eval.run_eval`, `python chat.py`. Useful flags: `--runs 3`, `--judge` (LLM wording judge), `--only c04,c10` (quick look, written to `results/scratch/`), `--prompt v1`.
+
+**Prompt version.** v3 is the final prompt and the default for `chat.py` and the eval (`PROMPT_VERSION` overrides it). The saved v1, v2 and v3 results are committed, and a full run refuses to overwrite them; to reproduce one, use `--only` for a quick look or `--overwrite` for a full rerun.
 
 ## What's where
 
 - `RULEBOOK.md`: the policy as an ordered decision table, plus what the preflight misses
-- `agent/prompt.py`: system prompt, versioned (v1 stays frozen once evaluated; fixes go in v2)
+- `agent/prompt.py`: system prompt, versioned: v1 (frozen, first eval), v2 (injection fix), v3 (final; dispute escalation, no timelines)
 - `agent/tools.py`: tool schemas, the router (the only path from model to API) and the single escalation wrapper
 - `agent/runner.py`: the hand-written tool loop, with budget and honest fallback
 - `paylane/guard.py`: the refund guard; `paylane/preflight.py`: the hard-escalation pattern check
