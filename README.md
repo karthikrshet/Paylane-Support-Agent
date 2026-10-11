@@ -138,7 +138,7 @@ A mock support agent on synthetic data. It is not a production payment system an
 - Text checks for ticket claims, promises and leaks are regex heuristics. Wording quality is left to the optional LLM judge, which can never override a deterministic fail.
 - There is no per-chat refund cap (QUESTIONS.md, Q6). Flagging 3+ refunds in one chat for review would be the next guard rule.
 - Adapters exist for Anthropic and OpenAI; other providers need a new adapter in `agent/llm.py`.
-- A later escalation reuses an already-open ticket without calling the API, so a more serious new reason (e.g. a legal threat after a refund escalation) doesn't reach the team. The fix (a new priority ticket, or appending to the open one) is described in EVAL_REPORT.md; the code is unchanged so it still matches the saved results.
+- A later escalation reuses an already-open ticket without calling the API, so a more serious new reason (e.g. a legal threat after a refund escalation) doesn't reach the team. The fix (a new priority ticket, or appending to the open one) is described in EVAL_REPORT.md; the code is unchanged so it still matches the saved results. Manual testing also showed that tickets are session-wide and aren't cleared on an identity switch, so a second customer's escalation in the same chat reuses the first customer's ticket and never reaches the team. Fix: clear the open ticket in reset_identity(), or open a new ticket when the customer changes.
 
 ## How I built this
 
