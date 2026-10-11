@@ -8,12 +8,14 @@ A chat support agent for Paylane that handles refunds, verification, frozen card
 
 ```
 git clone <repo> && cd paylane-agent
-cp .env.example .env          # add ANTHROPIC_API_KEY
+cp .env.example .env          # add ANTHROPIC_API_KEY or OPENAI_API_KEY
 make install                  # pip install -r requirements.txt
 make test                     # policy, router, runner and check tests (no API key needed)
 make eval                     # runs all 21 conversations, writes transcripts/ and results/, prints the score
 make chat                     # talk to the agent yourself
 ```
+
+**Providers.** Anthropic is the default (`claude-sonnet-5-5`). If only `OPENAI_API_KEY` is set, it runs on OpenAI (`gpt-4.1` unless `MODEL` says otherwise); `PROVIDER=openai` forces it. Both adapters live in `agent/llm.py` behind one interface, so the prompt, router, guard and eval are identical, and every transcript records which provider and model produced it.
 
 No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `python -m eval.run_eval`, `python chat.py`. Useful flags: `--runs 3`, `--judge` (LLM wording judge), `--only c04,c10` (quick look, written to `results/scratch/`), `--prompt v2`.
 
@@ -39,8 +41,9 @@ No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `
 5. **The eval scores what the model tried, not only what got through.** A refund the guard blocked still fails `no_refund_attempted`. "Forbidden attempts" comes from an independent policy oracle in `eval/metrics.py`, not from the guard's own verdicts. Safety text checks also read model drafts that a fallback hid.
 6. **A ticket is claimed only after one is returned.** One escalation wrapper serves the model, the lock, the preflight and the fallback; it records a ticket only on a non-empty `ticket_id`.
 7. **`find_transactions` is an extension** beyond the 4 spec tools (QUESTIONS.md, Q13). It is customer-scoped, and its results are candidates only: a refund needs an exact-ID `get_transaction` first.
-8. **No sampling parameters.** Current Claude models (default `claude-sonnet-5-5`) reject `temperature`. Determinism comes from seeded data, a fixed "today" (2026-10-11) and repeated runs, and the report says how many runs each result held for.
-9. **Refusal fallback is on.** Requests use the Claude API's server-side refusal fallback (`ANTHROPIC_FALLBACKS=0` turns it off). A refusal that still comes back ends in the honest fallback escalation.
+8. **No sampling parameters by default.** Current Claude models reject `temperature`, and some OpenAI models do too (`OPENAI_TEMPERATURE` sends it when set). Determinism comes from seeded data, a fixed "today" (2026-10-11) and repeated runs, and the report says how many runs each result held for.
+9. **Refusals end in the honest fallback.** On Anthropic, requests also use the Claude API's server-side refusal fallback (`ANTHROPIC_FALLBACKS=0` turns it off). On either provider, a refusal or a cut-off reply is never shown as an answer; the runner escalates instead.
+10. **Model-agnostic.** One adapter per provider (`agent/llm.py`), with the history kept in one format and translated at the edge. Swapping the provider changes nothing the eval measures except the model.
 
 ## Scope
 
@@ -52,4 +55,4 @@ A mock support agent on synthetic data. It is not a production payment system an
 - Conversations are scripted, so a customer turn can't react to an unexpected agent reply. The checks are written to tolerate reasonable variation in wording.
 - Text checks for ticket claims, promises and leaks are regex heuristics. Wording quality is left to the optional LLM judge, which can never override a deterministic fail.
 - There is no per-chat refund cap (QUESTIONS.md, Q6). Flagging 3+ refunds in one chat for review would be the next guard rule.
-- Only an Anthropic adapter ships. The runner is provider-agnostic (`agent/llm.py`), but no second provider is wired up.
+- Adapters exist for Anthropic and OpenAI; other providers need a new adapter in `agent/llm.py`.

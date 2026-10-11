@@ -20,7 +20,23 @@ SCHEMA = {"type": "object", "additionalProperties": False, "required": ["verdict
                          "reason": {"type": "string"}}}
 
 
+def _parse(text: str) -> tuple[bool | None, str]:
+    m = re.search(r"\{.*\}", text or "", re.S)
+    try:
+        data = json.loads(m.group(0) if m else text)
+        return data["verdict"] == "PASS", data.get("reason", "")
+    except (ValueError, KeyError, AttributeError, TypeError):
+        return None, f"judge returned unparseable output: {(text or '')[:80]!r}"
+
+
+def _prompt(rubric: str, transcript: str) -> str:
+    return (f"RUBRIC:\n{rubric}\n\nTRANSCRIPT:\n{transcript}\n\n"
+            'Return only JSON: {"verdict": "PASS" or "FAIL", "reason": "<one line>"}')
+
+
 class Judge:
+    """Anthropic judge."""
+
     def __init__(self, model: str):
         import anthropic
         self._anthropic = anthropic
@@ -28,22 +44,38 @@ class Judge:
         self.model = model
 
     def grade(self, rubric: str, transcript: str) -> tuple[bool | None, str]:
-        prompt = f"RUBRIC:\n{rubric}\n\nTRANSCRIPT:\n{transcript}\n\nReturn the verdict as JSON."
         try:
             resp = self.client.messages.create(
                 model=self.model, max_tokens=2000, system=JUDGE_SYSTEM,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": _prompt(rubric, transcript)}],
                 extra_body={"output_config": {"effort": "low",
                                               "format": {"type": "json_schema", "schema": SCHEMA}}})
         except self._anthropic.APIError as e:
             return None, f"judge error: {type(e).__name__}"
-        text = "".join(b.text for b in resp.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.S)
+        return _parse("".join(b.text for b in resp.content if b.type == "text"))
+
+
+class OpenAIJudge:
+    def __init__(self, model: str):
+        import openai
+        self._openai = openai
+        self.client = openai.OpenAI()
+        self.model = model
+
+    def grade(self, rubric: str, transcript: str) -> tuple[bool | None, str]:
         try:
-            data = json.loads(m.group(0) if m else text)
-            return data["verdict"] == "PASS", data.get("reason", "")
-        except (ValueError, KeyError, AttributeError):
-            return None, f"judge returned unparseable output: {text[:80]!r}"
+            resp = self.client.chat.completions.create(
+                model=self.model, max_completion_tokens=2000,
+                response_format={"type": "json_object"},
+                messages=[{"role": "system", "content": JUDGE_SYSTEM},
+                          {"role": "user", "content": _prompt(rubric, transcript)}])
+        except self._openai.APIError as e:
+            return None, f"judge error: {type(e).__name__}"
+        return _parse(resp.choices[0].message.content)
+
+
+def make_judge(provider: str, model: str):
+    return OpenAIJudge(model) if provider == "openai" else Judge(model)
 
 
 def transcript_for_judge(turns) -> str:
