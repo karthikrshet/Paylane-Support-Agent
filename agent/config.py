@@ -9,13 +9,18 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_dotenv(path: Path = ROOT / ".env"):
+    """The project's .env wins over variables already set in the shell, so a stale
+    system-wide key can't silently replace the one configured for this project.
+    Empty values in .env are skipped rather than blanking a shell variable."""
     if not path.exists():
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            v = v.strip().strip('"').strip("'")
+            if v:
+                os.environ[k.strip()] = v
 
 
 load_dotenv()
