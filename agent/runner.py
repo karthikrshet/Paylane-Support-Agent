@@ -2,7 +2,7 @@
 is visible.
 
 Per customer turn: preflight -> model -> (tool calls, one at a time, through the router)
--> repeat until the model replies in text, within 4 model rounds and 8 executed tool
+-> repeat until the model replies in text, within 6 model rounds and 8 executed tool
 calls. Anything that goes wrong ends in the honest fallback: escalate through the same
 wrapper and claim a ticket only if one was actually returned.
 """
@@ -14,7 +14,7 @@ from agent.tools import TOOL_SCHEMAS, escalate, route
 from paylane.preflight import detect, is_priority
 from paylane.redact import redact
 
-MAX_ROUNDS, MAX_TOOL_CALLS = 4, 8
+MAX_ROUNDS, MAX_TOOL_CALLS = 6, 8
 
 MSG_TICKET = "I've passed this to a teammate (ticket {tid}). They'll reply here."
 MSG_NO_TICKET = ("Sorry, I couldn't sort this out, and I couldn't open a ticket "

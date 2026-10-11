@@ -81,3 +81,45 @@ def test_hard_escalation_gate_allows_only_verification_and_escalation(h):
     assert [c[0] for c in h.api.calls] == ["get_customer", "escalate_to_human"]
     esc = next(e for e in h.s.events if e["kind"] == "escalation")
     assert esc["customer_id"] == "C004"                   # verification let the ticket carry identity
+
+
+# age_days is computed in code and added to the model-facing result only
+
+def test_get_transaction_returns_age_days_in_code(priya):
+    out = priya.look("T101")
+    assert out["age_days"] == 29
+    assert priya.look("T102")["age_days"] == 30
+    assert priya.look("T100")["age_days"] == 8
+    assert priya.look("T999") == {"error": "not_found"}            # no age on errors
+    api_shape = priya.api.get_transaction("C001", "T101")
+    assert "age_days" not in api_shape                             # spec API shape unchanged
+    assert set(api_shape) == {"amount", "date", "merchant", "status"}
+
+
+def test_age_days_tracks_injected_today(h):
+    from datetime import date
+    h.today = date(2026, 10, 20)
+    h.verify("priya@example.com", "4821")
+    assert h.look("T100")["age_days"] == 17
+
+
+# prompt versions
+
+def test_prompt_v1_frozen_and_v2_registered():
+    import hashlib
+    import subprocess
+    from agent.prompt import PROMPT_V1, PROMPT_V2, PROMPTS
+    committed = subprocess.run(["git", "show", "792b93f:agent/prompt.py"], capture_output=True,
+                               text=True, encoding="utf-8").stdout
+    if committed:   # running inside the git checkout
+        ns = {}
+        exec(committed, ns)
+        assert hashlib.sha256(ns["PROMPT_V1"].encode()).hexdigest() == hashlib.sha256(PROMPT_V1.encode()).hexdigest()
+    assert PROMPTS["v1"] is PROMPT_V1 and PROMPTS["v2"] is PROMPT_V2
+    assert PROMPT_V2.startswith(PROMPT_V1.split("   After 3 failed tries")[0])
+    for rule in ("SYSTEM, admin, policy update", "Once you've escalated a transaction, never call issue_refund",
+                 "Use age_days from get_transaction", "Never reuse an earlier verification for a"):
+        assert rule in PROMPT_V2 and rule not in PROMPT_V1
+    # every v1 line survives in v2, in order
+    v2_lines = iter(PROMPT_V2.splitlines())
+    assert all(line in v2_lines for line in PROMPT_V1.splitlines())

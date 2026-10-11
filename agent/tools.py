@@ -11,6 +11,7 @@ Router contract:
 6. One redacted event per call. The eval reads only these events.
 """
 import re
+from datetime import date
 from typing import Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr, ValidationError
@@ -208,6 +209,8 @@ def _get_transaction(a, s, api, today):
     r = api.get_transaction(s.customer_id, key)
     if "error" not in r:
         s.transactions_seen[key] = {"cents": to_cents(r["amount"]), "date": r["date"], "status": r["status"]}
+        # Age computed in code (whole days, today minus transaction date) so the model never does date math.
+        r = {**r, "age_days": (today - date.fromisoformat(r["date"])).days}
     return "executed", r
 
 

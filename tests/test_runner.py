@@ -2,7 +2,7 @@
 import json
 
 from agent.llm import ScriptedLLM
-from agent.runner import MAX_TOOL_CALLS, MSG_NO_TICKET, Conversation
+from agent.runner import MAX_ROUNDS, MAX_TOOL_CALLS, MSG_NO_TICKET, Conversation
 from paylane.api import MockPaylane
 from paylane.data import TODAY
 from paylane.session import Session
@@ -112,7 +112,7 @@ def test_fallback_leaves_valid_history_for_next_turn():
 
 
 def test_round_limit_fallback():
-    c, api, s = convo([[tool("find_transactions")]] * 4)
+    c, api, s = convo([[tool("find_transactions")]] * MAX_ROUNDS)
     r = c.send("hi")
     assert r.fallback == "round_limit"
 
