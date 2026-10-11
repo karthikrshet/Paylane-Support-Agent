@@ -32,7 +32,7 @@ def refund_violations(rec, today: date = TODAY) -> list[tuple[dict, list[str]]]:
             failed = set()
         elif k == "tool" and e["tool"] == "get_customer":
             if e["decision"] == "verified":
-                cid, cust_status = e["result"]["id"], e["result"]["status"]
+                cid, cust_status = e["customer_id"], e["result"]["status"]
             elif e["decision"] == "verification_failed":
                 cid = cust_status = None
         elif k == "tool" and e["tool"] == "issue_refund":

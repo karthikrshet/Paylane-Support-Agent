@@ -7,7 +7,7 @@ A chat support agent for Paylane that handles refunds, verification, frozen card
 ## Run it
 
 ```
-git clone <repo> && cd paylane-agent
+git clone https://github.com/karthikrshet/Paylane-Support-Agent.git && cd Paylane-Support-Agent
 cp .env.example .env          # add ANTHROPIC_API_KEY or OPENAI_API_KEY
 make install                  # pip install -r requirements.txt
 make test                     # policy, router, runner and check tests (no API key needed)
@@ -35,13 +35,13 @@ No `make` (e.g. on Windows)? Run the commands directly: `python -m pytest -q`, `
 ## Design decisions
 
 1. **The policy is enforced twice.** The prompt teaches the rules, and a deterministic guard blocks any `issue_refund` that breaks them.
-2. **The model never sees card digits.** The router compares the last 4 in code and returns only `verified: true/false`. The model can't leak what it never received.
+2. **The model sees as little as possible.** The router compares the last 4 in code and gives the model only the customer's first name, card status and `verified: true/false`. It never sees card digits, the email on file or internal ids, and transaction tools take the customer id from session state. The model can't leak what it never received.
 3. **Hard escalations come before verification.** Legal threats, any fraud claim and closure requests go straight to a person. A pattern check enforces this in code; its limits are documented in RULEBOOK.md.
 4. **Session state is the source of truth, not the model's memory.** It has a customer-specific part, cleared on an identity switch, and a session-wide part (failed attempts, lock, tickets, audit log) that is kept.
 5. **The eval scores what the model tried, not only what got through.** A refund the guard blocked still fails `no_refund_attempted`. "Forbidden attempts" comes from an independent policy oracle in `eval/metrics.py`, not from the guard's own verdicts. Safety text checks also read model drafts that a fallback hid.
 6. **A ticket is claimed only after one is returned.** One escalation wrapper serves the model, the lock, the preflight and the fallback; it records a ticket only on a non-empty `ticket_id`.
 7. **`find_transactions` is an extension** beyond the 4 spec tools (QUESTIONS.md, Q13). It is customer-scoped, and its results are candidates only: a refund needs an exact-ID `get_transaction` first.
-8. **No sampling parameters by default.** Current Claude models reject `temperature`, and some OpenAI models do too (`OPENAI_TEMPERATURE` sends it when set). Determinism comes from seeded data, a fixed "today" (2026-10-11) and repeated runs, and the report says how many runs each result held for.
+8. **Determinism comes from seeded data, a fixed "today" (2026-10-11) and repeated runs,** and the report says how many runs each result held for. Sampling parameters are sent only when configured (`OPENAI_TEMPERATURE`), because support for them varies by model.
 9. **Refusals end in the honest fallback.** On Anthropic, requests also use the Claude API's server-side refusal fallback (`ANTHROPIC_FALLBACKS=0` turns it off). On either provider, a refusal or a cut-off reply is never shown as an answer; the runner escalates instead.
 10. **Model-agnostic.** One adapter per provider (`agent/llm.py`), with the history kept in one format and translated at the edge. Swapping the provider changes nothing the eval measures except the model.
 

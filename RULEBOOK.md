@@ -52,6 +52,8 @@ These definitions are my assumptions until Paylane confirms them (see QUESTIONS.
 | closure | close / cancel / delete (my / the) (Paylane) account |
 | fraud | didn't / did not / never make, don't / do not recognise or recognize, unauthorised / unauthorized, fraud…, stolen, someone (else) used my card |
 
+**Design choice: verification never blocks a hard escalation.** Once the flag is set, only `get_customer` and `escalate_to_human` are allowed. Verification stays optional: it never blocks or delays the escalation, and when the customer does verify, the ticket carries their identity. If the model doesn't escalate, the runner does it itself at the end of the turn, and the `escalated_before_turn(1)` check in c11 and c12 confirms the escalation happens on the first turn.
+
 It's a backstop for obvious phrasing, not a complete classifier. The model is still the primary detector, and the eval scores whether the model escalated by itself (`escalated_by_model`).
 
 **Known misses:** paraphrases ("my solicitor", "I'll take this further", "shut it all down", "this wasn't me"), other languages, and misspellings.

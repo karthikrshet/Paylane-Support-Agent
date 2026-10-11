@@ -28,7 +28,7 @@ TOOL_SCHEMAS = [
         "name": "get_customer",
         "description": (
             "Verify the customer. Pass the email they gave and the last 4 card digits they gave. "
-            "The comparison happens in code. Returns {id, name, status, verified: true} on a match, "
+            "The comparison happens in code. Returns {name, status, verified: true} on a match, "
             "otherwise {verified: false} only, whatever was wrong."),
         "input_schema": {
             "type": "object",
@@ -171,7 +171,9 @@ def _get_customer(a, s, api, today):
     if "error" not in c and c.get("card_last4") == given:
         s.verified, s.customer_id = True, c["id"]
         s.customer_email, s.customer_status = email, c["status"]
-        return "verified", {"id": c["id"], "name": c["name"], "status": c["status"], "verified": True}
+        # Minimal result: first name, card status, verified. No internal id, email or card digits;
+        # transaction tools take the customer id from session state, never from the model.
+        return "verified", {"name": c["name"].split()[0], "status": c["status"], "verified": True}
 
     # Unknown email and wrong digits produce exactly the same result.
     if s.verified:
@@ -215,7 +217,15 @@ def _issue_refund(a, s, api, today):
     if not ok:
         return f"guard:{reason}", {"ok": False, "reason": f"POLICY_DENIED: {reason}",
                                    "next_step": NEXT_STEP.get(reason, "Do not retry. Call escalate_to_human.")}
-    r = api.issue_refund(key, a.amount)
+    try:
+        r = api.issue_refund(key, a.amount)
+    except Exception as e:
+        # The refund may or may not have gone through. Outcome unknown = never retry.
+        s.failed_refund_txn_ids.add(key)
+        s.log("refund_outcome_unknown", txn_id=key, error=type(e).__name__)
+        return "error:refund_outcome_unknown", {
+            "ok": False, "reason": "refund_outcome_unknown",
+            "next_step": "Do not retry. Tell the customer you couldn't confirm the refund and call escalate_to_human."}
     if r.get("ok"):
         s.refunded_txn_ids.add(key)
         s.transactions_seen[key]["status"] = "refunded"
@@ -281,8 +291,9 @@ def route(name, args, s, api, today, source="model") -> dict:
                     decision, out = HANDLERS[name](parsed, s, api, today)
                 except Exception as e:  # API or handler failure: logged, never a success
                     decision, out = f"error:{type(e).__name__}", {"error": "internal_error"}
+    # customer_id is the session's state after the call: audit only, never shown to the model.
     s.log("tool", source=source, tool=name, args=redact(args), decision=decision,
-          result=redact(out), txn_status_after=_txn_status(api, args))
+          result=redact(out), txn_status_after=_txn_status(api, args), customer_id=s.customer_id)
     return out
 
 

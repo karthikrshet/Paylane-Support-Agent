@@ -44,7 +44,7 @@ class MockPaylane:
         self.calls.append(("find_transactions", (merchant, amount, date)))
         hits = [(k, t) for k, t in self.txns.items() if t["customer_id"] == customer_id
                 and (merchant is None or merchant.lower() in t["merchant"].lower())
-                and (amount is None or round(float(amount) * 100) == t["cents"])
+                and (amount is None or to_cents(amount) == t["cents"])
                 and (date is None or t["date"] == date)]
         return {"matches": [{"txn_id": k, "amount": t["cents"] / 100, "date": t["date"],
                              "merchant": t["merchant"], "status": t["status"]}
