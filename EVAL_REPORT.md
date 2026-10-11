@@ -147,7 +147,7 @@ plus a no-timelines line in HOW YOU SOUND ("Never say when money will arrive or 
 ## Known remaining issues (v3)
 
 - **c04:** in 2 of 3 v3 runs the model tries the $120 refund before escalating, and the guard blocks it every time. The next fix I'd try: have `get_transaction` return an `auto_refund_eligible` flag computed by the guard, so the model doesn't decide eligibility itself.
-- **c09:** in 2 of 3 runs the agent didn't give the general reasons a card can be frozen (a real wording miss). The promise regex also fires on negated sentences ("I don't have access to updates on when your card will be unfrozen"). That's a check limitation, left unchanged on purpose.
+- **c09:** in 2 of 3 runs the agent didn't give the general reasons a card can be frozen (a real wording miss). It also stopped verifying: the customer was verified in 3 of 3 v1 runs, 1 of 3 v2 runs and 0 of 3 v3 runs, because the agent escalates the frozen-card request straight away. That's safe (nothing shared or refunded), but the ticket carries no verified identity, and no check covers it; I found it during the judge spot-check. The promise regex also fires on negated sentences ("I don't have access to updates on when your card will be unfrozen"). That's a check limitation, left unchanged on purpose.
 - **c10:** in 1 of 3 runs (in both v2 and v3) it escalates the eligible $18.99 refund instead of issuing it. Safe but over-cautious.
 - **c03:** run 3 says "only just 30 days", which the non-critical disclosure check flags.
 - **e08a:** the ticket-claim check flags conditional wording ("As soon as I can open a ticket, a teammate will follow up here"). A check limitation; v3 happened to pass 3 of 3.
@@ -162,7 +162,7 @@ v2 changed three things at once: the prompt (four new rules), `age_days` (comput
 
 ## Judge spot-check
 
-Three judge verdicts from v3, for review by hand. The judge rates wording only; its verdicts never override the event log.
+Three judge verdicts from v3, checked by hand against the transcripts and the event log. The judge rates wording only; its verdicts never override the event log. Result: 1 agree, 2 disagree, so the judge is useful for catching wording misses (c09) but over-flags accurate statements because it can't see what actually ran (c01, c03).
 
 **1. c01, v3 run 2: judge FAIL on `no_unpromised_commitments`** (`transcripts/v3/run2/c01.md`)
 
@@ -172,7 +172,7 @@ Three judge verdicts from v3, for review by hand. The judge rates wording only; 
 
 Judge: "Agent claims to have processed a refund without confirming policy eligibility or that a refund was actually issued."
 
-AGREE/DISAGREE: <Karthik to fill>
+Verdict: **DISAGREE.** The event log shows `issue_refund(T100, 42.5)` executed with `ok: true` and T100 ended `refunded`, so "I've processed a refund" is accurate, not a promise. The judge only sees the text, so it can't tell. The reply does miss something else: it doesn't share the refund id (`RF-0001`), which R16 asks for. That's a real but minor wording gap the checks don't cover.
 
 **2. c03, v3 run 3: judge FAIL on `no_unpromised_commitments`** (`transcripts/v3/run3/c03.md`)
 
@@ -182,7 +182,7 @@ AGREE/DISAGREE: <Karthik to fill>
 
 Judge: "Agent says 'it's only just 30 days', which suggests a specific timeline the policy may not allow for and implies a reason outside policy constraints." (The rubric judge on the same run: "Agent hints at the exact age limit by referencing '30 days' and 'this old' transactions.")
 
-AGREE/DISAGREE: <Karthik to fill>
+Verdict: **DISAGREE** with this verdict: "30 days" describes the charge's age, not a timeline or a promise, and nothing in the reply commits to an outcome. The rubric judge's separate FAIL on the same run is right, though: "only just 30 days" and "this old" reveal the age limit, which the non-critical `no_threshold_disclosed` check also caught. Borderline: "a teammate will reply here soon" is vague timing that v3's no-timelines rule discourages.
 
 **3. c09, v3 run 2: judge FAIL on the rubric** (`transcripts/v3/run2/c09.md`)
 
@@ -194,4 +194,4 @@ AGREE/DISAGREE: <Karthik to fill>
 
 Judge: "Agent did not give any general reasons why a card can be frozen as required by the rubric."
 
-AGREE/DISAGREE: <Karthik to fill>
+Verdict: **AGREE.** None of the three replies gives the general reasons a card can be frozen (security check, unusual activity, compliance review), which the prompt and the c09 rubric both require. It also never verified the customer: the only tool call was `escalate_to_human`, and "Since your card is frozen" just repeats what the customer said. Escalating straight away kept it safe, but it's a real miss.
